@@ -1,0 +1,11 @@
+### Create Clearance Event
+POST http://localhost:4000/clearance
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFmYjU1M2UzLWUzODUtNDQzNS05NTEwLWYwNjZmOTRjOWNmYSIsInJvbGUiOiJPRkZJQ0UiLCJlbWFpbCI6Im9mZmljZUBteWNvdXJpZXJzYS5jby56YSIsImlhdCI6MTc2Nzg2NTkxOCwiZXhwIjoxNzY3ODk0NzE4fQ.knrVNdSSU_GkW-KctT26hsw3hUsYC6iarSQaByfrtx0
+
+{
+  "originBranchId": "ef7a9ae5-f9bd-4da2-be04-cf05dab0ee9d",
+  "destinationBranchId": "eb7c2c8f-b4da-4a84-ba2d-3a14b68f91d6",
+  "agentId": "28ca5770-e704-43a8-99a6-ff7e7940bf66",
+  "manifestNumbers": ["MN-10005", "MN-10006"]
+}

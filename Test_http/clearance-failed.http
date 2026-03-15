@@ -1,0 +1,8 @@
+POST http://localhost:4000/clearance-actions/failed
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc0ODc4ODU3LWQ5ZDctNDI4MS1iZGJkLWRiMjY3YWMyOGFlMyIsInJvbGUiOiJEUklWRVIiLCJlbWFpbCI6ImRyaXZlckBteWNvdXJpZXJzYS5jby56YSIsImlhdCI6MTc2Nzg1NzAxMywiZXhwIjoxNzY3ODg1ODEzfQ.5iG3C7BoCeSyZLcWDpXbOuBbvKfHWU-E9aveWd41-I4
+
+{
+  "clearanceEventId": "6702a15c-9245-406a-91dc-71f2993ed959",
+  "reason": "Agent system offline - unable to retrieve freight"
+}

@@ -1,0 +1,3 @@
+### Driver - Available Clearance Events
+GET http://localhost:4000/clearance/available?agentId=74aa8e7b-743a-4413-823c-c3cd58d9ff26
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ijc0ODc4ODU3LWQ5ZDctNDI4MS1iZGJkLWRiMjY3YWMyOGFlMyIsInJvbGUiOiJEUklWRVIiLCJlbWFpbCI6ImRyaXZlckBteWNvdXJpZXJzYS5jby56YSIsImlhdCI6MTc2Nzg1NTcyNSwiZXhwIjoxNzY3ODg0NTI1fQ.w9bdpx_rJe7X1HN8UsoCs_clfyLvZIddA5Enn5Y7mHw

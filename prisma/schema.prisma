@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/* =========================
+   ENUMS
+========================= */
+
+enum Role {
+  ADMIN
+  OFFICE
+  DRIVER
+}
+
+enum TransportType {
+  AIR
+  ROAD
+}
+
+enum ClearanceStatus {
+  LODGED
+  IN_TRANSIT
+  AWAITING_CLEARANCE
+  PARTIAL_OPEN      // ✅ NEW
+  CLEARED_SUCCESS
+  CLEARED_FAILED
+  ADMIN_CLOSED
+}
+
+
+/* =========================
+   CORE MODELS
+========================= */
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role
+  active    Boolean  @default(true)
+
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+
+  resetToken         String?
+  resetTokenExpiry   DateTime?
+
+  createdEvents   ClearanceEvent[] @relation("CreatedEvents")
+  clearedEvents   ClearanceEvent[] @relation("ClearedEvents")
+
+  resolvedExceptions ClearanceException[] @relation("ResolvedBy")
+
+  pushTokens PushToken[]
+
+  createdAt DateTime @default(now())
+}
+
+model Branch {
+  id   String @id @default(uuid())
+  name String @unique
+
+  users User[]
+  originEvents      ClearanceEvent[] @relation("OriginBranch")
+  destinationEvents ClearanceEvent[] @relation("DestinationBranch")
+}
+
+model Agent {
+  id            String @id @default(uuid())
+  name          String @unique
+  transportType TransportType
+
+  clearanceEvents ClearanceEvent[]
+  waybills        AgentWaybill[]
+}
+
+/* =========================
+   CLEARANCE EVENT
+========================= */
+
+model ClearanceEvent {
+  id   String @id @default(uuid())
+
+  agentId String
+  agent   Agent @relation(fields: [agentId], references: [id])
+
+  agentWaybill String
+
+  originBranchId      String
+  destinationBranchId String
+  originBranch        Branch @relation("OriginBranch", fields: [originBranchId], references: [id])
+  destinationBranch   Branch @relation("DestinationBranch", fields: [destinationBranchId], references: [id])
+
+  status ClearanceStatus @default(LODGED)
+
+  expectedClearableAt DateTime
+  firstClearedAt      DateTime?
+  clearedAt           DateTime?
+  clearedByUserId     String?
+  clearedBy           User? @relation("ClearedEvents", fields: [clearedByUserId], references: [id])
+
+  createdByUserId String
+  createdBy       User @relation("CreatedEvents", fields: [createdByUserId], references: [id])
+
+  manifests Manifest[] @relation("EventManifests")
+  exceptions ClearanceException[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/* =========================
+   MANIFESTS & WAYBILLS
+========================= */
+
+model Manifest {
+  id             String @id @default(uuid())
+  manifestNumber String @unique
+
+  events   ClearanceEvent[] @relation("EventManifests")
+  waybills ManifestWaybill[]
+
+  createdAt DateTime @default(now())
+}
+
+model AgentWaybill {
+  id             String @id @default(uuid())
+  waybillNumber  String
+  agentId        String
+  agent          Agent @relation(fields: [agentId], references: [id])
+
+  manifests ManifestWaybill[]
+  exceptions ClearanceException[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([waybillNumber, agentId])
+}
+
+model ManifestWaybill {
+  id         String @id @default(uuid())
+  manifestId String
+  waybillId  String
+
+  manifest Manifest     @relation(fields: [manifestId], references: [id])
+  waybill  AgentWaybill @relation(fields: [waybillId], references: [id])
+
+  @@unique([manifestId, waybillId])
+}
+
+/* =========================
+   EXCEPTIONS
+========================= */
+
+model ClearanceException {
+  id String @id @default(uuid())
+
+  clearanceEventId String
+  clearanceEvent   ClearanceEvent @relation(fields: [clearanceEventId], references: [id])
+
+  waybillId String?
+  waybill   AgentWaybill? @relation(fields: [waybillId], references: [id])
+
+  reason String
+
+  resolvedAt        DateTime?
+  resolvedByUserId  String?
+  resolvedBy        User? @relation("ResolvedBy", fields: [resolvedByUserId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+/* =========================
+   PUSH TOKEN
+========================= */
+
+model PushToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  branchId  String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}

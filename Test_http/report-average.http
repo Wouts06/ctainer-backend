@@ -1,0 +1,23 @@
+### Login as Office
+POST http://localhost:4000/auth/login
+Content-Type: application/json
+
+{
+  "email": "office@mycouriersa.co.za",
+  "password": "ChangeMe123!"
+}
+
+###
+
+### Report - Average Clearing Time Per Agent (Days)
+### GET http://localhost:4000/reports/average-clearing-time
+
+### Report - Date Range
+### GET http://localhost:4000/reports/average-clearing-time?from=2026-01-01&to=2026-01-31
+
+### Report - Succes Only Filter
+###GET http://localhost:4000/reports/average-clearing-time?status=SUCCESS
+
+### Report - Failed Only Filter
+GET http://localhost:4000/reports/average-clearing-time?status=FAILED
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjFmYjU1M2UzLWUzODUtNDQzNS05NTEwLWYwNjZmOTRjOWNmYSIsInJvbGUiOiJPRkZJQ0UiLCJlbWFpbCI6Im9mZmljZUBteWNvdXJpZXJzYS5jby56YSIsImlhdCI6MTc2Nzg3NzE0NSwiZXhwIjoxNzY3OTA1OTQ1fQ.fsd0PaSmkoDpEq6dwEk4jBjySJiaHup7qi84IvVRgzE
