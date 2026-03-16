@@ -8,14 +8,27 @@ import { broadcastEvent } from "../routes/driver-live.routes.js";
    PUSH NOTIFICATION — NOTIFY DRIVERS OF NEW EVENT
 ====================================================== */
 async function notifyBranchDrivers(branchId, event) {
+
   try {
+
     const tokens = await prisma.pushToken.findMany({
       where: { branchId }
     });
 
-    if (!tokens.length) return;
+    if (!tokens.length) {
+      console.log("No push tokens for branch", branchId);
+      return;
+    }
 
     const registrationTokens = tokens.map(t => t.token);
+
+    console.log("Sending push to", registrationTokens.length, "devices");
+
+    // If Firebase is not initialized locally, skip sending
+    if (!admin.apps.length) {
+      console.warn("Firebase not initialized — skipping push send");
+      return;
+    }
 
     await admin.messaging().sendEachForMulticast({
       tokens: registrationTokens,
@@ -24,19 +37,23 @@ async function notifyBranchDrivers(branchId, event) {
         body: `${event.agentWaybill} ready for clearance`
       },
       data: {
-        eventId: event.id
+        eventId: String(event.id)   // MUST be string for Firebase
       }
     });
 
   } catch (err) {
+
     console.error("Push notification failed:", err);
+
   }
+
 }
 
 /* ======================================================
    DRIVER — FETCH EVENTS FOR BRANCH (QUEUE)
 ====================================================== */
 export async function getAvailableClearanceEvents(req, res) {
+
   const { agentId } = req.query;
 
   if (!req.user.branchId) {
@@ -66,8 +83,8 @@ export async function getAvailableClearanceEvents(req, res) {
     }
   });
 
-  // Overdue logic
   const enriched = events.map(event => {
+
     let overdue = false;
 
     if (event.agent.transportType === "AIR") {
@@ -82,9 +99,11 @@ export async function getAvailableClearanceEvents(req, res) {
       ...event,
       overdue
     };
+
   });
 
   res.json(enriched);
+
 }
 
 /* ======================================================
@@ -92,7 +111,9 @@ export async function getAvailableClearanceEvents(req, res) {
    ADMIN / OFFICE / DRIVER SAFE
 ====================================================== */
 export async function createClearanceEvent(req, res) {
+
   try {
+
     let input = { ...req.body };
 
     /* -------------------------------
@@ -106,15 +127,14 @@ export async function createClearanceEvent(req, res) {
           .json({ message: "Driver has no branch assigned" });
       }
 
-      // Lock origin branch
       input.originBranchId = req.user.branchId;
 
-      // Prevent same origin/destination
       if (input.destinationBranchId === req.user.branchId) {
         return res.status(400).json({
           message: "Destination cannot be the same as origin branch"
         });
       }
+
     }
 
     /* -------------------------------
@@ -177,6 +197,7 @@ export async function createClearanceEvent(req, res) {
         });
 
         manifestIds.push({ id: manifest.id });
+
       }
 
       /* -------------------------------
@@ -192,6 +213,7 @@ export async function createClearanceEvent(req, res) {
       });
 
       return clearanceEvent;
+
     });
 
     /* -------------------------------
@@ -218,5 +240,7 @@ export async function createClearanceEvent(req, res) {
     }
 
     res.status(500).json({ message: "Failed to create clearance event" });
+
   }
+
 }
