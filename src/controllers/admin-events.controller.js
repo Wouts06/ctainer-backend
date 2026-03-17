@@ -21,9 +21,9 @@ export async function getAdminEvents(req, res) {
       now.getDate() + 1
     );
 
-    // 🔹 Filter by destination branch
-    if (branchId) {
-      where.destinationBranchId = Number(branchId); // ✅ ensure correct type
+    // 🔹 Filter by destination branch (FIXED: UUID string, not number)
+    if (branchId && branchId !== "") {
+      where.destinationBranchId = branchId;
     }
 
     // 🔹 Status filters
@@ -34,22 +34,39 @@ export async function getAdminEvents(req, res) {
     }
 
     else if (status === "overdue") {
-      where.expectedClearableAt = {
-        lt: startOfToday
-      };
+      where.AND = [
+        {
+          expectedClearableAt: { not: null }
+        },
+        {
+          expectedClearableAt: { lt: startOfToday }
+        }
+      ];
     }
 
     else if (status === "due-today") {
-      where.expectedClearableAt = {
-        gte: startOfToday,
-        lt: endOfToday
-      };
+      where.AND = [
+        {
+          expectedClearableAt: { not: null }
+        },
+        {
+          expectedClearableAt: {
+            gte: startOfToday,
+            lt: endOfToday
+          }
+        }
+      ];
     }
 
     else if (status === "upcoming") {
-      where.expectedClearableAt = {
-        gte: endOfToday
-      };
+      where.AND = [
+        {
+          expectedClearableAt: { not: null }
+        },
+        {
+          expectedClearableAt: { gte: endOfToday }
+        }
+      ];
     }
 
     else if (status === "clearedToday") {
