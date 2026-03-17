@@ -7,9 +7,23 @@ export async function getAdminEvents(req, res) {
 
     const where = {};
 
+    const now = new Date();
+
+    const startOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    );
+
+    const endOfToday = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1
+    );
+
     // 🔹 Filter by destination branch
     if (branchId) {
-      where.destinationBranchId = branchId;
+      where.destinationBranchId = Number(branchId); // ✅ ensure correct type
     }
 
     // 🔹 Status filters
@@ -19,20 +33,32 @@ export async function getAdminEvents(req, res) {
       };
     }
 
-    if (status === "overdue") {
-      where.overdue = true;
-    }
-
-    if (status === "clearedToday") {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      where.clearedAt = {
-        gte: today
+    else if (status === "overdue") {
+      where.expectedClearableAt = {
+        lt: startOfToday
       };
     }
 
-    if (status === "exceptions") {
+    else if (status === "due-today") {
+      where.expectedClearableAt = {
+        gte: startOfToday,
+        lt: endOfToday
+      };
+    }
+
+    else if (status === "upcoming") {
+      where.expectedClearableAt = {
+        gte: endOfToday
+      };
+    }
+
+    else if (status === "clearedToday") {
+      where.clearedAt = {
+        gte: startOfToday
+      };
+    }
+
+    else if (status === "exceptions") {
       where.status = "CLEARED_FAILED";
     }
 
