@@ -54,3 +54,5 @@ export function broadcastAdminEvent(data) {
   });
 
 }
+
+export default router;
