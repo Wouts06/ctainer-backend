@@ -21,46 +21,48 @@ export async function getAdminEvents(req, res) {
       now.getDate() + 1
     );
 
-    // 🔹 Filter by destination branch (FIXED: UUID string, not number)
+    // 🔹 Filter by destination branch (UUID string)
     if (branchId && branchId !== "") {
       where.destinationBranchId = branchId;
     }
 
-  // 🔹 Status filters
-      if (status === "open") {
-        where.status = {
-          in: ["IN_TRANSIT", "AWAITING_CLEARANCE", "PARTIAL_OPEN"]
-        };
-      }
+    // 🔹 Status filters
+    if (status === "open") {
+      where.status = {
+        in: ["IN_TRANSIT", "AWAITING_CLEARANCE", "PARTIAL_OPEN"]
+      };
+    }
 
-      else if (status === "overdue") {
-        where.expectedClearableAt = {
-          lt: startOfToday
-        };
-      }
+    else if (status === "overdue") {
+      // ✅ FIX: use NOW instead of startOfToday
+      where.expectedClearableAt = {
+        lt: now
+      };
+    }
 
-      else if (status === "due-today") {
-        where.expectedClearableAt = {
-          gte: startOfToday,
-          lt: endOfToday
-        };
-      }
+    else if (status === "due-today") {
+      where.expectedClearableAt = {
+        gte: startOfToday,
+        lt: endOfToday
+      };
+    }
 
-      else if (status === "upcoming") {
-        where.expectedClearableAt = {
-          gte: endOfToday
-        };
-      }
+    else if (status === "upcoming") {
+      // ✅ Better alignment with real-time logic
+      where.expectedClearableAt = {
+        gte: now
+      };
+    }
 
-      else if (status === "clearedToday") {
-        where.clearedAt = {
-          gte: startOfToday
-        };
-      }
+    else if (status === "clearedToday") {
+      where.clearedAt = {
+        gte: startOfToday
+      };
+    }
 
-      else if (status === "exceptions") {
-        where.status = "CLEARED_FAILED";
-      }
+    else if (status === "exceptions") {
+      where.status = "CLEARED_FAILED";
+    }
 
     const events = await prisma.clearanceEvent.findMany({
       where,
