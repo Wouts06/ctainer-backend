@@ -12,6 +12,7 @@ import userAdminRoutes from "./routes/user-admin.routes.js";
 import branchAdminRoutes from "./routes/branch-admin.routes.js";
 import driverRoutes from "./routes/driver.routes.js";
 import pushRoutes from "./routes/push.routes.js";
+import adminLiveRoutes from "./routes/admin-live.routes.js";
 
 
 const app = express();
@@ -30,6 +31,7 @@ app.use("/admin-branches", branchAdminRoutes);
 app.use("/agents", agentRoutes);
 app.use("/driver", driverRoutes);
 app.use("/push", pushRoutes);
+app.use("/api/admin/live", adminLiveRoutes);
 
 app.get("/health", (req, res) => {
   res.json({ status: "OK" });

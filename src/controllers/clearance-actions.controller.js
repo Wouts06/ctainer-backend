@@ -6,6 +6,7 @@ import {
 } from "../validators/clearance-actions.validator.js";
 
 import { broadcastEvent } from "../routes/driver-live.routes.js";
+import { broadcastAdminEvent } from "../routes/admin-live.routes.js"; // ✅ NEW
 
 /**
  * Driver - Successful clearance
@@ -23,8 +24,15 @@ export async function clearSuccess(req, res) {
     }
   });
 
-  // 🔴 Broadcast update to SSE clients
+  // Driver SSE
   broadcastEvent(req.user.branchId, {
+    type: "EVENT_UPDATED",
+    eventId: event.id,
+    status: event.status
+  });
+
+  // Admin SSE ✅ NEW
+  broadcastAdminEvent({
     type: "EVENT_UPDATED",
     eventId: event.id,
     status: event.status
@@ -54,6 +62,13 @@ export async function clearPartial(req, res) {
     });
 
     broadcastEvent(req.user.branchId, {
+      type: "EVENT_UPDATED",
+      eventId: event.id,
+      status: event.status
+    });
+
+    // Admin SSE ✅ NEW
+    broadcastAdminEvent({
       type: "EVENT_UPDATED",
       eventId: event.id,
       status: event.status
@@ -108,6 +123,13 @@ export async function clearFailed(req, res) {
     status: event.status
   });
 
+  // Admin SSE ✅ NEW
+  broadcastAdminEvent({
+    type: "EVENT_UPDATED",
+    eventId: event.id,
+    status: event.status
+  });
+
   res.json({ success: true });
 
 }
@@ -129,6 +151,13 @@ export async function adminOverride(req, res) {
   });
 
   broadcastEvent(event.destinationBranchId, {
+    type: "EVENT_UPDATED",
+    eventId: event.id,
+    status: event.status
+  });
+
+  // Admin SSE ✅ NEW
+  broadcastAdminEvent({
     type: "EVENT_UPDATED",
     eventId: event.id,
     status: event.status
@@ -157,6 +186,13 @@ export async function adminCloseSuccess(req, res) {
     });
 
     broadcastEvent(event.destinationBranchId, {
+      type: "EVENT_UPDATED",
+      eventId: event.id,
+      status: event.status
+    });
+
+    // Admin SSE ✅ NEW
+    broadcastAdminEvent({
       type: "EVENT_UPDATED",
       eventId: event.id,
       status: event.status
@@ -205,6 +241,13 @@ export async function adminCloseFailed(req, res) {
     });
 
     broadcastEvent(event.destinationBranchId, {
+      type: "EVENT_UPDATED",
+      eventId: event.id,
+      status: event.status
+    });
+
+    // Admin SSE ✅ NEW
+    broadcastAdminEvent({
       type: "EVENT_UPDATED",
       eventId: event.id,
       status: event.status

@@ -3,6 +3,7 @@ import { addDays, startOfDay } from "date-fns";
 import { createClearanceSchema } from "../validators/clearance.validator.js";
 import admin from "../utils/firebase.js";
 import { broadcastEvent } from "../routes/driver-live.routes.js";
+import { broadcastAdminEvent } from "../routes/admin-live.routes.js"; // ✅ NEW
 
 /* ======================================================
    PUSH NOTIFICATION — NOTIFY DRIVERS OF NEW EVENT
@@ -37,7 +38,7 @@ async function notifyBranchDrivers(branchId, event) {
         body: `${event.agentWaybill} ready for clearance`
       },
       data: {
-        eventId: String(event.id)   // MUST be string for Firebase
+        eventId: String(event.id)
       }
     });
 
@@ -108,7 +109,6 @@ export async function getAvailableClearanceEvents(req, res) {
 
 /* ======================================================
    CREATE CLEARANCE EVENT
-   ADMIN / OFFICE / DRIVER SAFE
 ====================================================== */
 export async function createClearanceEvent(req, res) {
 
@@ -116,9 +116,6 @@ export async function createClearanceEvent(req, res) {
 
     let input = { ...req.body };
 
-    /* -------------------------------
-       DRIVER AUTO BRANCH LOCK
-    -------------------------------- */
     if (req.user.role === "DRIVER") {
 
       if (!req.user.branchId) {
@@ -137,14 +134,8 @@ export async function createClearanceEvent(req, res) {
 
     }
 
-    /* -------------------------------
-       VALIDATE AFTER INJECTION
-    -------------------------------- */
     const parsed = createClearanceSchema.parse(input);
 
-    /* -------------------------------
-       VALIDATE AGENT
-    -------------------------------- */
     const agent = await prisma.agent.findUnique({
       where: { id: parsed.agentId }
     });
@@ -153,9 +144,6 @@ export async function createClearanceEvent(req, res) {
       return res.status(400).json({ message: "Invalid agent" });
     }
 
-    /* -------------------------------
-       EXPECTED CLEAR DATE LOGIC
-    -------------------------------- */
     let expectedClearableAt = new Date();
 
     if (agent.transportType === "AIR") {
@@ -166,9 +154,6 @@ export async function createClearanceEvent(req, res) {
       expectedClearableAt = addDays(expectedClearableAt, 3);
     }
 
-    /* -------------------------------
-       CREATE EVENT TRANSACTION
-    -------------------------------- */
     const event = await prisma.$transaction(async tx => {
 
       const clearanceEvent = await tx.clearanceEvent.create({
@@ -183,9 +168,6 @@ export async function createClearanceEvent(req, res) {
         }
       });
 
-      /* -------------------------------
-         UPSERT MANIFESTS
-      -------------------------------- */
       const manifestIds = [];
 
       for (const manifestNumber of parsed.manifestNumbers) {
@@ -200,9 +182,6 @@ export async function createClearanceEvent(req, res) {
 
       }
 
-      /* -------------------------------
-         ATTACH MANIFESTS
-      -------------------------------- */
       await tx.clearanceEvent.update({
         where: { id: clearanceEvent.id },
         data: {
@@ -217,14 +196,22 @@ export async function createClearanceEvent(req, res) {
     });
 
     /* -------------------------------
-       SEND PUSH NOTIFICATION
+       PUSH NOTIFICATIONS
     -------------------------------- */
     notifyBranchDrivers(parsed.destinationBranchId, event);
 
     /* -------------------------------
-       BROADCAST LIVE UPDATE (SSE)
+       DRIVER SSE
     -------------------------------- */
     broadcastEvent(parsed.destinationBranchId, {
+      type: "NEW_EVENT",
+      eventId: event.id
+    });
+
+    /* -------------------------------
+       ADMIN SSE  ✅ NEW
+    -------------------------------- */
+    broadcastAdminEvent({
       type: "NEW_EVENT",
       eventId: event.id
     });
