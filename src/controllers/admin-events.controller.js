@@ -26,58 +26,41 @@ export async function getAdminEvents(req, res) {
       where.destinationBranchId = branchId;
     }
 
-    // 🔹 Status filters
-    if (status === "open") {
-      where.status = {
-        in: ["IN_TRANSIT", "AWAITING_CLEARANCE", "PARTIAL_OPEN"]
-      };
-    }
+  // 🔹 Status filters
+      if (status === "open") {
+        where.status = {
+          in: ["IN_TRANSIT", "AWAITING_CLEARANCE", "PARTIAL_OPEN"]
+        };
+      }
 
-    else if (status === "overdue") {
-      where.AND = [
-        {
-          expectedClearableAt: { not: null }
-        },
-        {
-          expectedClearableAt: { lt: startOfToday }
-        }
-      ];
-    }
+      else if (status === "overdue") {
+        where.expectedClearableAt = {
+          lt: startOfToday
+        };
+      }
 
-    else if (status === "due-today") {
-      where.AND = [
-        {
-          expectedClearableAt: { not: null }
-        },
-        {
-          expectedClearableAt: {
-            gte: startOfToday,
-            lt: endOfToday
-          }
-        }
-      ];
-    }
+      else if (status === "due-today") {
+        where.expectedClearableAt = {
+          gte: startOfToday,
+          lt: endOfToday
+        };
+      }
 
-    else if (status === "upcoming") {
-      where.AND = [
-        {
-          expectedClearableAt: { not: null }
-        },
-        {
-          expectedClearableAt: { gte: endOfToday }
-        }
-      ];
-    }
+      else if (status === "upcoming") {
+        where.expectedClearableAt = {
+          gte: endOfToday
+        };
+      }
 
-    else if (status === "clearedToday") {
-      where.clearedAt = {
-        gte: startOfToday
-      };
-    }
+      else if (status === "clearedToday") {
+        where.clearedAt = {
+          gte: startOfToday
+        };
+      }
 
-    else if (status === "exceptions") {
-      where.status = "CLEARED_FAILED";
-    }
+      else if (status === "exceptions") {
+        where.status = "CLEARED_FAILED";
+      }
 
     const events = await prisma.clearanceEvent.findMany({
       where,
