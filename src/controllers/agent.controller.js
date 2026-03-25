@@ -20,14 +20,19 @@ export async function getAgents(req, res) {
 export async function createAgent(req, res) {
   try {
 
-    const { name } = req.body;
+    const { name, transportType } = req.body;
 
-    if (!name) {
-      return res.status(400).json({ message: "Name is required" });
+    if (!name || !transportType) {
+      return res.status(400).json({
+        message: "Name and transportType are required"
+      });
     }
 
     const agent = await prisma.agent.create({
-      data: { name }
+      data: {
+        name,
+        transportType
+      }
     });
 
     res.json(agent);
